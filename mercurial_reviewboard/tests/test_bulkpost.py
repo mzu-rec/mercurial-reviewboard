@@ -16,6 +16,4 @@ def test_bulkpost(mock_send):
     expected0 = open('mercurial_reviewboard/tests/diffs/two_revs_0', 'r').read()
     eq_(expected0, mock_send.call_args_list[0][0][4])
     expected1 = open('mercurial_reviewboard/tests/diffs/two_revs_1', 'r').read()
-    print expected1
-    print mock_send.call_args_list[1][0][4]
     eq_(expected1, mock_send.call_args_list[1][0][4])
