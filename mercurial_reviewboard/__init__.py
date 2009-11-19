@@ -154,11 +154,13 @@ def getreviewboard(ui):
         ui.status('username: %s\n' % username)
     else:
         username = ui.prompt('username:')
+        ui.setconfig('reviewboard', 'user', username)
     password = ui.config('reviewboard', 'password')
     if password:
         ui.status('password: %s\n' % '**********')
     else:
         password = ui.getpass()
+        ui.setconfig('reviewboard', 'password', password)
 
     try:
         reviewboard.login(username, password)
@@ -226,6 +228,8 @@ def find_reviewboard_repo_id(ui, reviewboard, opts):
         else:
             repo_id = repositories[0]['id']
             ui.status('repository id: %s\n' % repo_id)
+    # cache the repo id for use with bulkpost
+    opts['repoid'] = repo_id
     return repo_id
 
 def createfields(ui, repo, c, parentc, opts):
@@ -362,6 +366,8 @@ cmdtable = {
             _('comma separated list of people needed to review the code')),
         ('G', 'target_groups', '', 
             _('comma separated list of groups needed to review the code')),
+        ('', 'bulkpost', False, 
+            _('post each changeset as a separate review')),
         ],
         _('hg postreview [OPTION]... [REVISION]')),
 }
