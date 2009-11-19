@@ -48,10 +48,25 @@ this is not the case.
 
     rparent = find_rparent(ui, repo, c, opts)        
     parent  = find_parent(ui, repo, c, rparent, opts)
-
-    diff, parentdiff = create_review_data(ui, repo, c, parent, rparent)
-
-    send_review(ui, repo, c, parent, diff, parentdiff, opts)
+    
+    if opts.get('bulkpost'):
+        # send one review for each revision
+        contexts = find_contexts(repo, parent, c, False)
+        for localc in contexts:
+            p1 = localc.p1()
+            p2 = localc.p2()
+            # choose a parent that is included in the changesets
+            if p2 in contexts or (localc == contexts[0] and p2 == parent):
+                localparent = p2
+            else:
+                localparent = p1
+            diff, parentdiff = create_review_data(ui, repo, localc, 
+                                                  localparent, rparent)
+            send_review(ui, repo, localc, localparent, diff, parentdiff,
+                        opts)
+    else:
+        diff, parentdiff = create_review_data(ui, repo, c, parent, rparent)
+        send_review(ui, repo, c, parent, diff, parentdiff, opts)
     
 def find_rparent(ui, repo, c, opts):
     outgoing = opts.get('outgoing')
@@ -307,13 +322,14 @@ def find_branch_parent(ui, ctx):
     
     return currctx
   
-def find_contexts(repo, parentctx, ctx):
+def find_contexts(repo, parentctx, ctx, reverse=True):
     'Find all context between the contexts, excluding the parent context.'
     contexts = []
     for node in repo.changelog.nodesbetween([parentctx.node()],[ctx.node()])[0]:
         if node != parentctx.node():
             contexts.append(repo[node])
-    contexts.reverse()
+    if reverse:
+        contexts.reverse()
     return contexts
 
 def readline():
