@@ -30,3 +30,9 @@ def test_repoid():
     args = fancyopts.fancyopts(['-i', '101'], cmdtable['postreview'][1], 
                                opts, True)
     eq_('101', opts['repoid'])
+    
+def test_bulkpost():
+    opts = {}
+    args = fancyopts.fancyopts(['--bulkpost'], cmdtable['postreview'][1], 
+                               opts, True)
+    eq_(True, opts['bulkpost'])
