@@ -3,9 +3,9 @@ import os, os.path, shutil, tarfile
 from mock import Mock
 
 from mercurial import fancyopts, hg, ui
-from mercurial_reviewboard import cmdtable
+from hg_reviewboard import cmdtable
 
-test_dir  = 'mercurial_reviewboard/tests'
+test_dir  = 'tests'
 tar_dir   = '%s/repo_tars' % test_dir
 repos_dir = '%s/repos'     % test_dir
 

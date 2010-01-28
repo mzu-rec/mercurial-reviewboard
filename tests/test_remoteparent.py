@@ -1,7 +1,7 @@
 from nose.tools import eq_
 
-from mercurial_reviewboard import remoteparent
-from mercurial_reviewboard.tests import get_repo, repos_dir, mock_ui
+from hg_reviewboard import remoteparent
+from tests import get_repo, repos_dir, mock_ui
 
 def test_remoteparent_is_empty():
     ui = mock_ui()

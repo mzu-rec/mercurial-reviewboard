@@ -1,1 +1,1 @@
-from mercurial_reviewboard import *
+from hg_reviewboard import * # plugin logic

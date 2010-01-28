@@ -1,9 +1,9 @@
 from mock import patch_object
 from nose.tools import eq_
 
-import mercurial_reviewboard
-from mercurial_reviewboard import createfields
-from mercurial_reviewboard.tests import get_initial_opts, get_repo, mock_ui
+import hg_reviewboard
+from hg_reviewboard import createfields
+from tests import get_initial_opts, get_repo, mock_ui
 
 changesets_string = ('changesets:\n'
                      '\t1:669e757d4a24 "1"\n'
@@ -69,14 +69,14 @@ class TestCreateFieldsRevisionDetailsInteractive:
         self.ui, self.repo, self.c, self.parentc, self.opts = set_up_two_revs()
         self.opts['interactive'] = True        
     
-    @patch_object(mercurial_reviewboard, 'readline')
+    @patch_object(hg_reviewboard, 'readline')
     def test_createfields_summary(self, mock_read):
         mock_read.side_effect = create_mock_results(['foo', '', 'n'])
         
         fields = self.get_fields()
         eq_('foo', fields['summary'])
     
-    @patch_object(mercurial_reviewboard, 'readline')    
+    @patch_object(hg_reviewboard, 'readline')    
     def test_createfields_summary_default(self, mock_read):
         mock_read.side_effect = create_mock_results(['', '', 'n'])
         
@@ -96,7 +96,7 @@ class TestCreateFieldsRevisionDetailsInteractive:
         for args in args_list:
             yield self.check_createfields_description, args[0], args[1]
     
-    @patch_object(mercurial_reviewboard, 'readline')        
+    @patch_object(hg_reviewboard, 'readline')        
     def check_createfields_description(self, results, description, mock_read):
         mock_read.side_effect = create_mock_results(results)
         

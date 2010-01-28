@@ -1,7 +1,7 @@
 from nose.tools import eq_
 
-from mercurial_reviewboard import find_contexts
-from mercurial_reviewboard.tests import get_repo, mock_ui
+from hg_reviewboard import find_contexts
+from tests import get_repo, mock_ui
 
 def test_find_two_contexts():
     repo = get_repo(mock_ui(), 'two_revs')
