@@ -1,9 +1,9 @@
 from mock import patch
 
-from mercurial_reviewboard import getreviewboard
-from mercurial_reviewboard.tests import get_initial_opts, mock_ui
+from hg_reviewboard import getreviewboard
+from tests import get_initial_opts, mock_ui
 
-@patch('mercurial_reviewboard.ReviewBoard')
+@patch('hg_reviewboard.ReviewBoard')
 def test_get_credentials_from_config(mock_reviewboard):
         
     # username and password configs are included 

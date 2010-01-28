@@ -1,10 +1,10 @@
 from mock import patch
 from nose.tools import eq_
 
-from mercurial_reviewboard import postreview
-from mercurial_reviewboard.tests import get_initial_opts, get_repo, mock_ui
+from hg_reviewboard import postreview
+from tests import get_initial_opts, get_repo, mock_ui
 
-@patch('mercurial_reviewboard.send_review')
+@patch('hg_reviewboard.send_review')
 def test_tip(mock_send):
     '''Test that the diff is for revision 1.'''
     ui = mock_ui()
@@ -12,10 +12,10 @@ def test_tip(mock_send):
     opts = get_initial_opts()
     postreview(ui, repo, **opts)
     
-    expected = open('mercurial_reviewboard/tests/diffs/two_revs_1', 'r').read()
+    expected = open('tests/diffs/two_revs_1', 'r').read()
     eq_(expected, mock_send.call_args[0][4])
     
-@patch('mercurial_reviewboard.send_review')
+@patch('hg_reviewboard.send_review')
 def test_not_tip(mock_send):
     '''Test that the diff is for revision 0.'''
     ui = mock_ui()
@@ -23,6 +23,6 @@ def test_not_tip(mock_send):
     opts = get_initial_opts()
     postreview(ui, repo, **opts)
     
-    expected = open('mercurial_reviewboard/tests/diffs/two_revs_0', 
+    expected = open('tests/diffs/two_revs_0', 
                     'r').read()
     eq_(expected, mock_send.call_args[0][4])

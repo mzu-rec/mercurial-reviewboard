@@ -1,7 +1,7 @@
 from nose.tools import eq_
 
 from mercurial import fancyopts
-from mercurial_reviewboard import cmdtable
+from hg_reviewboard import cmdtable
 
 def test_existing():
     opts = {}

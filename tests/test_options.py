@@ -1,8 +1,8 @@
 from nose.tools import raises
 
 from mercurial import util
-from mercurial_reviewboard import postreview
-from mercurial_reviewboard.tests import get_initial_opts, mock_ui
+from hg_reviewboard import postreview
+from tests import get_initial_opts, mock_ui
 
 @raises(util.Abort)
 def test_no_parent_combo():
