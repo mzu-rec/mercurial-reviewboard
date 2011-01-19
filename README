@@ -23,6 +23,7 @@ server          = http://reviewboard.example.com/
 # password        = ...
 # target_groups   = ... # default review groups
 # target_people   = ... # default review people
+# launch_webbrowser = true # open review in a browser
 
 # For a specific proxy specify:
 # http_proxy = http://192.168.1.1:3128
@@ -30,6 +31,7 @@ server          = http://reviewboard.example.com/
 # http_proxy = none
 # otherwise your proxy will be autodetected from the 'http_proxy' env var(unix)
 # or the registry(windows)
+
 --- ~/.hgrc ---
 
 Configure the Review Board reposity id for this Hg repo per in your per project
@@ -61,5 +63,24 @@ login to http://reviewboard.example.com
 username: ...
 password:
 review request draft saved: http://reviewboard.example.com/r/12/
+
+To post all changes not present in the parent repository:
+
+$ hg postreview -o -g
+
+To post all changes on branch "my_branch":
+
+$ hg postreview -b my_branch
+
+
+TESTING:
+
+In order to run the plugin tests, run:
+
+    python mercurial_reviewboard/tests/virtualenv/bootstrap.py ENV --no-site-packages
+    ENV/bin/nosetests
+    
+See the TESTING file for more information.
+
 
 Copyright (C) 2008 Dennis Schoen <dennis.schoen@epublica.de>
