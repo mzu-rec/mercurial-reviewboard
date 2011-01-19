@@ -8,6 +8,7 @@ import os
 import urllib2
 import simplejson
 import mercurial.ui
+import datetime
 from urlparse import urljoin, urlparse
 
 class APIError(Exception):
@@ -51,6 +52,14 @@ class Repository:
         self.name = name
         self.tool = tool
         self.path = path
+
+class Request:
+    """
+    Represents a ReviewBoard request
+    """
+    def __init__(self, id, summary):
+        self.id = id
+        self.summary = summary
 
 class ReviewBoardHTTPPasswordMgr(urllib2.HTTPPasswordMgr):
     """
@@ -215,16 +224,19 @@ class HttpClient:
             data = urllib2.urlopen(r).read()
             self._cj.save(self.cookie_file)
             return data
-        except urllib2.URLError, e:
+        except urllib2.HTTPError, e:
             if not hasattr(e, 'code'):
                 raise
             if e.code >= 400:
-                raise ReviewBoardError(e.read())
+                e.msg = "HTTP Error: " + e.msg
+                raise ReviewBoardError(e.msg)
             else:
                 return ""
-        except urllib2.HTTPError, e:
-            raise ReviewBoardError(e.read())
-
+        except urllib2.URLError, e:
+            code = e.reason[0]
+            msg = "URL Error: " + e.reason[1]
+            raise ReviewBoardError({'err' : {'msg' : msg, 'code' : code}})
+        
     def _process_json(self, data):
         """
         Loads in a JSON file and returns the data if successful. On failure,
@@ -284,6 +296,7 @@ class Api20Client(ApiClient):
     def __init__(self, httpclient):
         ApiClient.__init__(self, httpclient)
         self._repositories = None
+        self._pending_user_requests = None
         self._requestcache = {}
 
     def login(self, username=None, password=None):
@@ -298,6 +311,24 @@ class Api20Client(ApiClient):
                                   for r in rsp['repositories']]
         return self._repositories
 
+    def pending_user_requests(self):
+        # Get all the pending request within the last week for a given user
+        if not self._pending_user_requests:
+            usr = str(self._httpclient._password_mgr.rb_user)
+            delta = datetime.timedelta(days=7)
+            today = datetime.datetime.today()
+            sevenDaysAgo = today - delta
+            rsp = self._api_request('GET', '/api/review-requests/' +
+                                           '?from-user=%s' % usr +
+                                           '&status=pending' +
+                                           '&max-results=50' +
+                                           '&last-updated-from=%s' % sevenDaysAgo)
+            self._pending_user_requests = []
+            for r in rsp['review_requests']:
+                self._pending_user_requests += [Request(r['id'], r['summary'].strip())]
+                
+        return self._pending_user_requests    
+
     def new_request(self, repo_id, fields={}, diff='', parentdiff=''):
         req = self._create_request(repo_id)
         self._set_request_details(req, fields, diff, parentdiff)
@@ -306,8 +337,7 @@ class Api20Client(ApiClient):
 
     def update_request(self, id, fields={}, diff='', parentdiff=''):
         req = self._get_request(id)
-        self._set_request_details(req, fields, diff, parentdiff)
-        self.publish(id)
+        self._set_request_details(req, fields, diff, parentdiff)        
 
     def publish(self, id):
         req = self._get_request(id)
@@ -438,11 +468,7 @@ class Api10Client(ApiClient):
         self._set_fields(id, fields)
         if diff:
             self._upload_diff(id, diff, parentdiff)
-        if fields or diff:
-            self._save_draft(id)
 
-    def _save_draft(self, id):
-        self._api_post("/api/json/reviewrequests/%s/draft/save/" % id )
 
 def make_rbclient(url, username, password, proxy=None, apiver=''):
     httpclient = HttpClient(url, proxy)
