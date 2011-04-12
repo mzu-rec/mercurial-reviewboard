@@ -10,7 +10,7 @@ from mercurial.i18n import _
 from reviewboard import make_rbclient, ReviewBoardError
 
 
-__version__ = '3.5.3'
+__version__ = '3.5.5'
 
 
 def postreview(ui, repo, rev='.', **opts):
@@ -52,6 +52,7 @@ repository accessible to Review Board is not the upstream repository.
 
     rparent = find_rparent(ui, repo, c, opts)
     ui.debug('remote parent: %s\n' % rparent)
+    
     parent  = find_parent(ui, repo, c, rparent, opts)
     ui.debug('parent: %s\n' % parent)
 
@@ -59,13 +60,14 @@ repository accessible to Review Board is not the upstream repository.
         msg = "Unable to determine parent revision for diff. "
         if opts.get('outgoingchanges'):
             msg += _("If using -g/--outgoingchanges, make sure you have some "
-                     "(type 'hg out'). Or did you forget to commit ('hg st')?")
+                     "(type 'hg out'). Did you forget to commit ('hg st')?")
         raise util.Abort(msg)
 
     diff, parentdiff = create_review_data(ui, repo, c, parent, rparent)
 
     send_review(ui, repo, c, parent, diff, parentdiff, opts)
-    
+
+
 def find_rparent(ui, repo, c, opts):
     outgoing = opts.get('outgoing')
     outgoingrepo = opts.get('outgoingrepo')
@@ -81,6 +83,7 @@ def find_rparent(ui, repo, c, opts):
         rparent = None
     return rparent
 
+
 def find_parent(ui, repo, c, rparent, opts):
     parent = opts.get('parent')
     outgoingchanges = opts.get('outgoingchanges')
@@ -95,6 +98,7 @@ def find_parent(ui, repo, c, rparent, opts):
     else:
         parent = c.parents()[0]
     return parent
+
 
 def create_review_data(ui, repo, c, parent, rparent):
     'Returns a tuple of the diff and parent diff for the review.'
@@ -134,7 +138,8 @@ def send_review(ui, repo, c, parentc, diff, parentdiff, opts):
     
     if ui.configbool('reviewboard', 'launch_webbrowser'):
         launch_webbrowser(ui, request_url)
-        
+
+
 def launch_webbrowser(ui, request_url):
     # not all python installations have this module, so only import it
     # when it's used
@@ -145,7 +150,8 @@ def launch_webbrowser(ui, request_url):
     
     ui.status('browser launched\n')
     webbrowser.open(request_url)
-    
+
+
 def getdiff(ui, repo, r, parent):
     '''return diff for the specified revision'''
     output = ""
@@ -153,8 +159,8 @@ def getdiff(ui, repo, r, parent):
         output += chunk
     return output
 
+
 def getreviewboard(ui, opts):
-    
     '''We are going to fetch the setting string from hg prefs, there we can set
     our own proxy, or specify 'none' to pass an empty dictionary to urllib2
     which overides the default autodetection when we want to force no proxy'''
@@ -193,7 +199,8 @@ def update_review(request_id, ui, fields, diff, parentdiff, opts):
             reviewboard.publish(request_id)
     except ReviewBoardError, msg:
         raise post_error(msg, parentdiff)
-    
+
+
 def new_review(ui, fields, diff, parentdiff, opts):
     reviewboard = getreviewboard(ui, opts)
     
@@ -322,6 +329,7 @@ def createfields(ui, repo, c, parentc, opts):
     
     return fields
 
+
 def remoteparent(ui, repo, ctx, upstream=None):
     remotepath = expandpath(ui, upstream)
     remoterepo = hg.repository(ui, remotepath)
@@ -344,7 +352,7 @@ def expandpath(ui, upstream):
         return ui.expandpath(upstream)
     else:
         return ui.expandpath(ui.expandpath('reviewboard', 'default-push'),
-                                           'default')
+            'default')
 
 
 def check_parent_options(opts):
@@ -356,7 +364,13 @@ def check_parent_options(opts):
         raise util.Abort(_(
            "you cannot combine the --parent, --outgoingchanges "
            "and --branch options"))
-        
+           
+    if useg and not (opts.get('outgoing') or opts.get('outgoingrepo')):
+        msg = ("When using the -g/--outgoingchanges flag, you must also use "
+            "either the -o or the -O <repo> flag.")
+        raise util.Abort(msg)
+
+
 def find_branch_parent(ui, ctx):
     '''Find the parent revision of the 'ctx' branch.'''
     branchname = ctx.branch()
@@ -390,7 +404,7 @@ def find_contexts(repo, parentctx, ctx, opts):
         contexts.append(currctx)
     contexts.reverse()
     return contexts
-    
+
 
 def find_server(ui, opts):
     server = opts.get('server')
@@ -405,6 +419,7 @@ def find_server(ui, opts):
 def readline():
     line = sys.stdin.readline()
     return line
+
 
 cmdtable = {
     "postreview":
