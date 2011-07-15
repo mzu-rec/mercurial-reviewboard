@@ -10,7 +10,7 @@ from mercurial.i18n import _
 from reviewboard import make_rbclient, ReviewBoardError
 
 
-__version__ = '3.6.1'
+__version__ = '4.0.0'
 
 
 def postreview(ui, repo, rev='.', **opts):
@@ -185,10 +185,10 @@ def getreviewboard(ui, opts):
         ui.status('password: %s\n' % '**********')
 
     try:
-        return make_rbclient(server, username, password, proxy=proxy, 
+        return make_rbclient(server, username, password, proxy=proxy,
             apiver=opts.get('apiver'))
     except ReviewBoardError, msg:
-        raise util.Abort(_(str(msg)))
+        raise util.Abort(_(unicode(msg)))
 
 
 def update_review(request_id, ui, fields, diff, parentdiff, opts):
@@ -198,12 +198,12 @@ def update_review(request_id, ui, fields, diff, parentdiff, opts):
         if opts['publish']:
             reviewboard.publish(request_id)
     except ReviewBoardError, msg:
-        raise util.Abort(_(msg))
+        raise util.Abort(_(unicode(msg)))
 
 
 def new_review(ui, fields, diff, parentdiff, opts):
     reviewboard = getreviewboard(ui, opts)
-    
+
     repo_id = find_reviewboard_repo_id(ui, reviewboard, opts)
 
     try:
@@ -211,8 +211,8 @@ def new_review(ui, fields, diff, parentdiff, opts):
         if opts['publish']:
             reviewboard.publish(request_id)
     except ReviewBoardError, msg:
-        raise util.Abort(_(msg))
-    
+        raise util.Abort(_(unicode(msg)))
+
     return request_id
 
 
@@ -221,11 +221,11 @@ def find_reviewboard_repo_id(ui, reviewboard, opts):
         return opts.get('repoid')
     elif ui.config('reviewboard','repoid'):
         return ui.config('reviewboard','repoid')
-    
+
     try:
         repositories = reviewboard.repositories()
     except ReviewBoardError, msg:
-        raise util.Abort(_(str(msg)))
+        raise util.Abort(_(unicode(msg)))
 
     if not repositories:
         raise util.Abort(_('no repositories configured at %s' % server))
@@ -405,9 +405,9 @@ def find_server(ui, opts):
         server = ui.config('reviewboard', 'server')
     if not server:
         msg = 'please specify a reviewboard server in your .hgrc file or using the --server flag'
-        raise util.Abort(_(msg))
+        raise util.Abort(_(unicode(msg)))
     return server
-    
+
 
 def readline():
     line = sys.stdin.readline()
