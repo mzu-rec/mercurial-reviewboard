@@ -4,7 +4,7 @@ import os, errno, re, sys
 import cStringIO
 import operator
 
-from mercurial import cmdutil, hg, ui, mdiff, patch, util
+from mercurial import cmdutil, hg, ui, mdiff, patch, util, localrepo
 from mercurial.i18n import _
 
 from reviewboard import make_rbclient, ReviewBoardError
@@ -116,24 +116,23 @@ def create_review_data(ui, repo, c, parent, rparent):
     
     
 def send_review(ui, repo, c, parentc, diff, parentdiff, opts):
-    
+    reviewboard = getreviewboard(ui, opts)
     fields = createfields(ui, repo, c, parentc, opts)
 
     request_id = opts['existing']
     if request_id:
-        update_review(request_id, ui, fields, diff, parentdiff, opts)
+        update_review(request_id, ui, reviewboard, fields, diff, parentdiff, opts)
     else:
-        request_id = new_review(ui, fields, diff, parentdiff, 
-                                   opts)
+        request_id = new_review(ui, reviewboard, fields, diff, parentdiff, opts)
 
     request_url = '%s/%s/%s/' % (find_server(ui, opts), "r", request_id)
 
     if not request_url.startswith('http'):
         request_url = 'http://%s' % request_url
 
-    msg = 'review request draft saved: %s\n'
+    msg = '\nreview request draft saved: %s\n'
     if opts['publish']:
-        msg = 'review request published: %s\n'
+        msg = '\nreview request published: %s\n'
     ui.status(msg % request_url)
     
     if ui.configbool('reviewboard', 'launch_webbrowser'):
@@ -175,24 +174,24 @@ def getreviewboard(ui, opts):
     
     server = find_server(ui, opts)
     
-    ui.status('reviewboard:\t%s\n' % server)
-    ui.status('\n')
+    ui.status('reviewboard: %s\n' % server)
     username = opts.get('username') or ui.config('reviewboard', 'user')
     if username:
         ui.status('username: %s\n' % username)
     password = opts.get('password') or ui.config('reviewboard', 'password')
     if password:
         ui.status('password: %s\n' % '**********')
+    apiver = opts.get('apiver') or ui.config('reviewboard', 'apiver')
+    if apiver:
+        ui.status('apiver: %s\n' % apiver)
 
     try:
-        return make_rbclient(server, username, password, proxy=proxy,
-            apiver=opts.get('apiver'))
+        return make_rbclient(server, username, password, proxy=proxy, apiver=apiver)
     except ReviewBoardError, msg:
         raise util.Abort(_(unicode(msg)))
 
 
-def update_review(request_id, ui, fields, diff, parentdiff, opts):
-    reviewboard = getreviewboard(ui, opts)
+def update_review(request_id, ui, reviewboard, fields, diff, parentdiff, opts):
     try:
         reviewboard.update_request(request_id, fields, diff, parentdiff)
         if opts['publish']:
@@ -201,11 +200,8 @@ def update_review(request_id, ui, fields, diff, parentdiff, opts):
         raise util.Abort(_(unicode(msg)))
 
 
-def new_review(ui, fields, diff, parentdiff, opts):
-    reviewboard = getreviewboard(ui, opts)
-
+def new_review(ui, reviewboard, fields, diff, parentdiff, opts):
     repo_id = find_reviewboard_repo_id(ui, reviewboard, opts)
-
     try:
         request_id = reviewboard.new_request(repo_id, fields, diff, parentdiff)
         if opts['publish']:
@@ -266,7 +262,7 @@ def createfields(ui, repo, c, parentc, opts):
 
     changesets_string = 'changesets:\n'
     changesets_string += \
-        ''.join(['\t%s:%s "%s"\n' % (ctx.rev(), ctx, ctx.description()) \
+        ''.join(['%s:%s "%s"\n------------------------------\n' % (ctx.rev(), ctx, ctx.description()) \
                  for ctx in all_contexts])
     if opts['branch']:
         branch_msg = "review of branch: %s\n\n" % (c.branch())
@@ -325,7 +321,15 @@ def createfields(ui, repo, c, parentc, opts):
 
 def remoteparent(ui, repo, ctx, upstream=None):
     remotepath = expandpath(ui, upstream)
-    remoterepo = hg.repository(ui, remotepath)
+    if hasattr(localrepo, 'localpeer'):
+        # hg >= 2.3
+        remoterepo = hg.peer(repo, {}, remotepath)
+        other = remoterepo.local()
+        if other is not None:
+            remoterepo = other
+    else:
+        # hg < 2.3
+        remoterepo = hg.repository(ui, remotepath)
     
     out = findoutgoing(repo, remoterepo)
     
@@ -345,6 +349,10 @@ def findoutgoing(repo, remoterepo):
         return repo.findoutgoing(remoterepo)
 
     try:
+        version = float('.'.join(util.version().split('.')[:2]))
+        if version >= 2.1:
+            outgoing = discovery.findcommonoutgoing(repo, remoterepo)
+            return outgoing.missing
         common, outheads = discovery.findcommonoutgoing(repo, remoterepo)
         return repo.changelog.findmissing(common=common, heads=outheads)
     except AttributeError:
