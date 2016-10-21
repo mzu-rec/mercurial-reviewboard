@@ -5,6 +5,7 @@ review to a reviewboard server.
 
 For more information about Review Board see: http://www.review-board.org/
 
+(this version was initially imported from https://bitbucket.org/mdelagra/mercurial-reviewboard)
 
 CONFIGURATION:
 
@@ -24,6 +25,7 @@ server          = http://reviewboard.example.com/
 # target_groups   = ... # default review groups
 # target_people   = ... # default review people
 # launch_webbrowser = true # open review in a browser
+# apiver          = 1.0 or 2.0, to overwrite the automatic detection
 
 # For a specific proxy specify:
 # http_proxy = http://192.168.1.1:3128
