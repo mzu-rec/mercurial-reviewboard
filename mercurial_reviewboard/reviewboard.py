@@ -6,7 +6,7 @@ import getpass
 import mimetools
 import os
 import urllib2
-import simplejson
+import json as simplejson
 import mercurial.ui
 import datetime
 from urlparse import urljoin, urlparse
@@ -184,15 +184,12 @@ class HttpClient:
             # get rid of the port number if it's present.
             host = host.split(":")[0]
 
-            print("Looking for '%s %s' cookie in %s" % \
-                  (host, path, self.cookie_file))
             self._cj.load(self.cookie_file, ignore_expires=True)
 
             try:
                 cookie = self._cj._cookies[host][path]['rbsessionid']
 
                 if not cookie.is_expired():
-                    print("Loaded valid cookie -- no login required")
                     return True
 
                 print("Cookie file loaded, but cookie has expired")
@@ -283,7 +280,7 @@ class HttpClient:
 
         content_type = "multipart/form-data; boundary=%s" % BOUNDARY
 
-        return content_type, content
+        return content_type, unicode(content, errors='ignore')
 
 
 class ApiClient:
@@ -493,7 +490,9 @@ def make_rbclient(url, username, password, proxy=None, apiver=''):
             httpclient.api_request('GET', '/api/')
             apiver = '2.0'
         except:
+            print("error message checking for api version 2.0: %s" % e)
             apiver = '1.0'
+        print("detected apiver: %s" % apiver)
 
     if apiver == '2.0':
         cli = Api20Client(httpclient)
